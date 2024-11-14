@@ -1,0 +1,35 @@
+---
+title: "p8105_hw5_mw3845"
+author: "Minghe Wang"
+date: "2024-11-14"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+# Problem 1
+
+```{r problem1_func}
+check_duplicate_bd <- function(n) {
+  # Simulate uniformly distributed birthday with size n
+  birthdays <- sample(1:365, n, replace = TRUE)
+  # Check duplicate
+  return(any(duplicated(birthdays)))
+}
+#Simulate each size 10000 times
+sim_num = 10000
+group_size = 2:50
+prob = numeric(length(group_size))
+
+for (i in group_size){
+  n = group_size[i]
+  results = replicate(sim_num, check_duplicate_bd(n))
+  prob[i] = mean(results)
+}
+```
+
+
