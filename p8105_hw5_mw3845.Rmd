@@ -109,3 +109,46 @@ ggplot(power_df, aes(x = mu_vec, y = power)) +
 
 By calculating the proportion of times the null hypothesis was rejected for each true mean value, we've constructed a power curve that illustrates the association between effect size and power. The positive association confirms that larger effect sizes lead to higher power, which aligns with theoretical expectations.
 
+```{r Problem2_estAvg_vs_trueValueMu}
+# Calculate average estimate for all samples
+average_estimate_df = sim_results_df %>%
+  group_by(mu_vec) %>%
+  summarise(
+    avg_estimate = mean(estimate)
+  )
+
+# Calculate average estimate for samples where null was rejected
+average_estimate_rejected_df = sim_results_df %>%
+  filter(p.value < alpha) %>%
+  group_by(mu_vec) %>%
+  summarise(
+    avg_estimate_rejected = mean(estimate)
+  )
+
+combined_estimate_df = left_join(average_estimate_df, average_estimate_rejected_df, by = "mu_vec") %>% 
+  pivot_longer(
+    cols = c(avg_estimate, avg_estimate_rejected),
+    names_to = "Estimate_Type",
+    values_to = "Average_Estimate"
+  )
+
+combined_estimate_df$Estimate_Type = recode(
+  combined_estimate_df$Estimate_Type,
+  "avg_estimate" = "All Samples",
+  "avg_estimate_rejected" = "Samples with Rejected H0"
+)
+
+# Plot the average estimates
+ggplot(combined_estimate_df, aes(x = mu_vec, y = Average_Estimate, color = Estimate_Type)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = expression('Average Estimate of ' * hat(mu) * ' vs True ' * mu),
+    x = expression('True Mean ' * mu),
+    y = expression('Average Estimate of ' * hat(mu)),
+    color = "Estimate Type"
+  ) +
+  theme_minimal()
+
+```
+
