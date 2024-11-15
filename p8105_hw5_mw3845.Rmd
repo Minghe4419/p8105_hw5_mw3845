@@ -13,7 +13,7 @@ library(ggplot2)
 
 # Problem 1
 
-```{r problem1_func}
+```{r problem1}
 check_duplicate_bd <- function(n) {
   # Simulate uniformly distributed birthday with size n
   birthdays <- sample(1:365, n, replace = TRUE)
@@ -49,8 +49,63 @@ In this problem, we simulate a problem to measure the probability of duplicate b
 
 #Problem 2
 
-```{r}
+```{r Problem2}
+#fixed parameters for simulation
+n = 30                              #fixed sample size
+sigma = 5                           #fixed sigma
+ds_num = 5000                       #fixed number of datasets
+alpha = 0.05
 
+#Write function to get estimate and p-value for each dataset
+sim_estimate_pval = function(mu, n = 30, sigma = 5){
+  
+  sim_data = tibble(
+    x = rnorm(n, mean = mu, sd = sigma)
+  )
+  
+  t.test(sim_data$x, mu = 0) %>% 
+    broom::tidy() %>% 
+    select(estimate, p.value)
+}
+
+sim_results_df = 
+  expand_grid(
+    mu_vec = c(0, 1, 2, 3, 4, 5, 6),
+    iter = 1:ds_num
+  ) |> 
+  mutate(
+    estimate_df = map(mu_vec, sim_estimate_pval)
+  ) |> 
+  unnest(estimate_df)
+
+sim_results_df |> 
+  pivot_longer(
+    estimate:p.value,
+    names_to = "parameter", 
+    values_to = "estimate") |> 
+  group_by(parameter, mu_vec) |> 
+  summarize(
+    emp_mean = mean(estimate),
+    emp_var = var(estimate)) |> 
+  knitr::kable(digits = 5)
+```
+With the table containing empirical mean and variance for estimate and p-value, we expect an positive association between the power and $\mu$ because the p-value decreases as $\mu$ increases. This assumption will be verified in later part.
+
+```{r Problem2_power_mu_plot}
+power_df <- sim_results_df %>%
+  group_by(mu_vec) %>%
+  summarize(
+    power = mean(p.value < alpha)
+  )
+
+ggplot(power_df, aes(x = mu_vec, y = power)) +
+  geom_line(color = 'blue') +
+  geom_point(color = 'red', size = 2) +
+  labs(title = 'Power Curve of One-Sample t-test',
+       x = expression('True Mean ' * mu),
+       y = 'Power (Probability of Rejecting H0)') +
+  theme_minimal()
 ```
 
+By calculating the proportion of times the null hypothesis was rejected for each true mean value, we've constructed a power curve that illustrates the association between effect size and power. The positive association confirms that larger effect sizes lead to higher power, which aligns with theoretical expectations.
 
