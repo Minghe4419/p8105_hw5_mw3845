@@ -150,7 +150,6 @@ ggplot(combined_estimate_df, aes(x = mu_vec, y = Average_Estimate, color = Estim
     color = "Estimate Type"
   ) +
   theme_minimal()
-
 ```
 
 We make comparison between estimates of all samples and the samples with rejected $H_0$ by plotting the relationship of true mean $\mu$ vs average estimated mean $\hat\mu$. We observe that $\hat \mu$ for sample with rejcted $H_0$ will be higher than $\hat \mu$ of all sample. As we have previously illustrate that the large effect size will lead higher power for one sample t-test, it can be implied that it’s often positive deviations that are more likely to lead to rejection for lower true mean, because those deviations are large enough to cross the critical value threshold. As a result, the samples that reject H₀ have a mean estimate that is typically higher.
@@ -170,6 +169,8 @@ homicide_summary_df = homocide_df %>%
     unresolved_homicide = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
   )
 ```
+
+The dataset contains `r nrow(homocide_df)` rows and `r ncol(homocide_df)` columns. Each row represent an observation of homicide case. Vairables includes case id `uid`,  victims' information and etc, we will focus on the `city`, `state`, and `disposition`. We clean data by combining `city` `state` into `city_state`, counting `total_homicide` and binary `unresolved_homicide`(with `disposition`) for each city in order to further investigate using proportion test.
 
 
 ```{r Problem3_prop_tests}
@@ -212,9 +213,12 @@ homicide_result = homicide_summary_df %>%
   janitor::clean_names()
 
 # Plotting proportion of unresolved homicide for cities
-homicide_result %>% 
+homicide_result = homicide_result %>% 
   arrange(estimate) %>% 
-  ggplot(aes(x = reorder(city_state, estimate), y = estimate)) +
+  mutate(city_state = factor (city_state, levels = city_state))
+
+homicide_result %>% 
+  ggplot(aes(x = city_state, y = estimate)) +
   geom_point() +
   geom_errorbar(aes(ymin = conf_low, ymax = conf_high), width = 0.2) +
   coord_flip() +
@@ -225,3 +229,4 @@ homicide_result %>%
   ) 
 ```
 
+Before conducting `prop.test` and plotting the estimated proportion of unresolved homicide and their confidence intervals per `city_state`, we drop the city with small sample size / no `unresolved_homicide` which is not appropriate for proportion test. From the plot, we observe highest estimated proportion of unresolved homicide in `r tail(pull(arrange(homicide_result, estimate), city_state), 1)`, and lowest estimated proportion in `r head(pull(arrange(homicide_result, estimate), city_state), 1)`.
