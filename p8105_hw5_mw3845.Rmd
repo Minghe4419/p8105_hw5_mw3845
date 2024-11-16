@@ -48,9 +48,9 @@ ggplot(data, aes(x = GroupSize, y = Probability)) +
 
 In this problem, we simulate a problem to measure the probability of duplicate birthday among the group of `n` people. According to the plot, we see a positive relationship between `group_size` and `probability_of_duplicate_birthday`. The result aligns with our intuition that with more people in a group, there are more likely to be people with duplicate birthday.
 
-#Problem 2
+# Problem 2
 
-```{r Problem2}
+```{r Problem2, cache=TRUE}
 #fixed parameters for simulation
 n = 30                              #fixed sample size
 sigma = 5                           #fixed sigma
@@ -153,7 +153,9 @@ ggplot(combined_estimate_df, aes(x = mu_vec, y = Average_Estimate, color = Estim
 
 ```
 
-#Problem 3
+We make comparison between estimates of all samples and the samples with rejected $H_0$ by plotting the relationship of true mean $\mu$ vs average estimated mean $\hat\mu$. We observe that $\hat \mu$ for sample with rejcted $H_0$ will be higher than $\hat \mu$ of all sample. This might because 
+
+# Problem 3
 
 ```{r Problem3_read_and_summarize_data}
 homocide_df = read.csv("./homicide-data.csv")
@@ -170,7 +172,7 @@ homicide_summary_df = homocide_df %>%
 ```
 
 
-```{r prop_tests}
+```{r Problem3_prop_tests}
 # Select Baltimore's data
 baltimore_df = homicide_summary_df %>% 
   filter(city_state == "Baltimore, MD")
@@ -191,11 +193,14 @@ baltimore_result
 
 # Conduct prop.test on other cities
 homicide_result = homicide_summary_df %>% 
+  filter(total_homicide > 0 & unresolved_homicide > 0) %>% 
   mutate(
     prop_test_result = map2(
-      unresolved_homicide, total_homicide, \(unres, tot) prop.test(x = unres, n = tot) %>% 
-      broom::tidy()
+      unresolved_homicide, total_homicide, \(unres, tot) prop.test(x = unres, n = tot)
     )
+  ) %>% 
+  mutate(
+    prop_test_result = map(prop_test_result, broom::tidy)
   ) %>% 
   unnest(prop_test_result) %>% 
   select(
