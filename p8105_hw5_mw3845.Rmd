@@ -152,3 +152,6 @@ ggplot(combined_estimate_df, aes(x = mu_vec, y = Average_Estimate, color = Estim
 
 ```
 
+#Problem 3
+
+
