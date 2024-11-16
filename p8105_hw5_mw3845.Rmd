@@ -50,7 +50,7 @@ In this problem, we simulate a problem to measure the probability of duplicate b
 
 # Problem 2
 
-```{r Problem2, cache=TRUE}
+```{r Problem2}
 #fixed parameters for simulation
 n = 30                              #fixed sample size
 sigma = 5                           #fixed sigma
