@@ -9,6 +9,7 @@ output: github_document
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
+library(purrr)
 ```
 
 # Problem 1
@@ -154,4 +155,68 @@ ggplot(combined_estimate_df, aes(x = mu_vec, y = Average_Estimate, color = Estim
 
 #Problem 3
 
+```{r Problem3_read_and_summarize_data}
+homocide_df = read.csv("./homicide-data.csv")
+
+homicide_summary_df = homocide_df %>% 
+  mutate(
+    city_state = paste(city, state, sep = ", ")
+  ) %>% 
+  group_by(city_state) %>% 
+  summarise(
+    total_homicide = n(),
+    unresolved_homicide = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
+```
+
+
+```{r prop_tests}
+# Select Baltimore's data
+baltimore_df = homicide_summary_df %>% 
+  filter(city_state == "Baltimore, MD")
+
+# Use prop.test for the proportion of unresolved homicides
+baltimore_result = 
+  prop.test(
+  x = pull(baltimore_df, unresolved_homicide),
+  n = pull(baltimore_df, total_homicide)
+) %>% 
+  broom::tidy() %>% 
+  select(
+    estimate, conf.low, conf.high
+  ) %>% 
+  janitor::clean_names()
+
+baltimore_result
+
+# Conduct prop.test on other cities
+homicide_result = homicide_summary_df %>% 
+  mutate(
+    prop_test_result = map2(
+      unresolved_homicide, total_homicide, \(unres, tot) prop.test(x = unres, n = tot) %>% 
+      broom::tidy()
+    )
+  ) %>% 
+  unnest(prop_test_result) %>% 
+  select(
+    city_state,
+    estimate,
+    conf.low,
+    conf.high
+  ) %>% 
+  janitor::clean_names()
+
+# Plotting proportion of unresolved homicide for cities
+homicide_result %>% 
+  arrange(estimate) %>% 
+  ggplot(aes(x = reorder(city_state, estimate), y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf_low, ymax = conf_high), width = 0.2) +
+  coord_flip() +
+  labs(
+    title = "Proportion of Unresolved Homicides with Confidence Intervals",
+    x = "City, State",
+    y = "Estimated Proportion of Unresolved Homicides"
+  ) 
+```
 
